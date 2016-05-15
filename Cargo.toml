@@ -2,6 +2,11 @@
 name = "slackir"
 version = "0.1.0"
 authors = ["William Lee <wlee@mochify.com>"]
+build = "build.rs"
+
+[build-dependencies]
+serde_codegen = "*"
+syntex = "*"
 
 [dependencies]
 irc = "*"
@@ -12,3 +17,5 @@ toml = "*"
 clap = { version = "*", features = ["unstable"] }
 rustc-serialize = "*"
 hyper = "*"
+log = "*"
+env_logger = "*"

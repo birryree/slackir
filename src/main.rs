@@ -5,6 +5,11 @@ extern crate irc;
 extern crate rustc_serialize;
 extern crate websocket;
 extern crate hyper;
+extern crate serde;
+extern crate serde_json;
+
+extern crate env_logger;
+extern crate log;
 
 use std::io::Result;
 use std::error::Error;
@@ -21,13 +26,18 @@ use websocket::message::Type;
 use websocket::client::request::Url;
 use websocket::Client as WsClient;
 use hyper::Client as HttpClient;
+use hyper::header::Connection;
 
 
 mod config;
+mod types;
 
 use config::Configuration;
+use types::RtmApiResponse;
 
 fn main() {
+
+    let l = env_logger::init();
 
     let matches = clap_app!(app =>
         (version: "1.0")
@@ -47,14 +57,14 @@ fn main() {
 
     let (irc_tx, irc_rx) : (Sender<String>, Receiver<String>) = channel();
 
-    let url = format!("https://slack.com/api/rtm.start?token={}", &config.slack.token);
+    let url = format!("https://slack.com/api/rtm.start?token={}&no_unreads&simple_latest", &config.slack.token);
     println!("Connecting to RTM API at {}", &url);
 
     let http = HttpClient::new();
-    let mut rsp = http.get(&url).send().unwrap();
+    let mut rsp = http.get(&url).header(Connection::close()).send().unwrap();
     let mut body = String::new();
     rsp.read_to_string(&mut body).unwrap();
-    println!("Rsp: {}", body);
+    let j = serde_json::from_str::<RtmApiResponse>(&body);
 
     //let rtm_url = Url::parse(&url).unwrap();
 
