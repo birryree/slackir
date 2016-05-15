@@ -1,0 +1,14 @@
+[package]
+name = "slackir"
+version = "0.1.0"
+authors = ["William Lee <wlee@mochify.com>"]
+
+[dependencies]
+irc = "*"
+serde = "*"
+serde_json = "*"
+websocket = "*"
+toml = "*"
+clap = { version = "*", features = ["unstable"] }
+rustc-serialize = "*"
+hyper = "*"
