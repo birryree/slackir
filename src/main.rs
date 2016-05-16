@@ -23,7 +23,7 @@ use std::default::Default;
 use irc::client::prelude::*;
 use websocket::{Message as WsMessage, Sender as WsSender, Receiver as WsReceiver};
 use websocket::message::Type;
-use websocket::client::request::Url;
+use websocket::client::request::Url as WsUrl;
 use websocket::Client as WsClient;
 use hyper::Client as HttpClient;
 use hyper::header::Connection;
@@ -53,10 +53,6 @@ fn main() {
 
     println!("{}", config.slack.token);
 
-    let (slack_tx, slack_rx) : (Sender<String>, Receiver<String>) = channel();
-
-    let (irc_tx, irc_rx) : (Sender<String>, Receiver<String>) = channel();
-
     let url = format!("https://slack.com/api/rtm.start?token={}&no_unreads&simple_latest", &config.slack.token);
     println!("Connecting to RTM API at {}", &url);
 
@@ -64,15 +60,62 @@ fn main() {
     let mut rsp = http.get(&url).header(Connection::close()).send().unwrap();
     let mut body = String::new();
     rsp.read_to_string(&mut body).unwrap();
-    let j = serde_json::from_str::<RtmApiResponse>(&body);
+    let json = 
+        match serde_json::from_str::<RtmApiResponse>(&body) {
+            Ok(v) => v,
+            Err(e) => panic!("Error parsing JSON: {:?}", e)
+        };
 
-    //let rtm_url = Url::parse(&url).unwrap();
+    if !json.ok {
+        panic!("Could not authenticate to Slack");
+    }
 
-    //let slack_request = Client::connect(rtm_url).unwrap();
+    let ws_url = WsUrl::parse(&json.url).unwrap();
+    let slack_ws = WsClient::connect(ws_url).unwrap();
+    let slack_rsp = slack_ws.send().unwrap();
+    slack_rsp.validate().unwrap();
 
-    /*let response = slack_request.send().unwrap();
-    response.validate().unwrap();*/
+    let (mut sender, mut receiver) = slack_rsp.begin().split();
+    let (slack_tx, slack_rx) = channel();
+    let (irc_tx, irc_rx) : (Sender<String>, Receiver<String>) = channel();
 
+    let send_loop = thread::spawn(move || {
+        loop {
+            let message: WsMessage = match slack_rx.recv() {
+                Ok(m) => {
+                    println!("Message received: {}", m); 
+                    m
+                },
+                Err(e) => {
+                    println!("Problem in send loop {:?}", e);
+                    return;
+                }
+            };
+        }
+    });
+
+    let recv_loop = thread::spawn(move || {
+        for message in receiver.incoming_messages() {
+            let message: WsMessage = match message {
+                Ok(m) => {
+                    println!("Message received 2: {}", m);
+                    m
+                },
+                Err(e) => {
+                    println!("Receive loop problem: {:?}", e);
+                    let _ = slack_tx.send(WsMessage::close());
+                    return;
+                }
+            };
+        }
+    });
+
+    loop {
+        
+    }
+
+
+/*
     let threads: Vec<_> = config.servers.into_iter().map(|c| {
         let slack = slack_tx.clone();
         spawn(move || {
@@ -93,7 +136,7 @@ fn main() {
         })
     }).collect();
     threads.into_iter().map(|h| h.join().unwrap()).count();
-
+*/
 
     /*
     let config = Config {

@@ -1,5 +1,5 @@
 #[derive(Debug, Deserialize)]
 pub struct RtmApiResponse {
-    ok: bool,
-    url: String,
+    pub ok: bool,
+    pub url: String,
 }
