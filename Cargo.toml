@@ -12,7 +12,7 @@ syntex = "*"
 irc = "*"
 serde = "*"
 serde_json = "*"
-websocket = "*"
+ws = { version = "*", features = ["ssl"] }
 toml = "*"
 clap = { version = "*", features = ["unstable"] }
 rustc-serialize = "*"
