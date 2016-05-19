@@ -2,7 +2,6 @@
 extern crate clap;
 extern crate toml;
 extern crate irc;
-extern crate rustc_serialize;
 extern crate ws;
 extern crate hyper;
 extern crate serde;

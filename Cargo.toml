@@ -15,7 +15,6 @@ serde_json = "*"
 ws = { version = "*", features = ["ssl"] }
 toml = "*"
 clap = { version = "*", features = ["unstable"] }
-rustc-serialize = "*"
 hyper = "*"
 log = "*"
 env_logger = "*"
